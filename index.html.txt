@@ -1,0 +1,269 @@
+import React, { useState, useMemo } from 'react';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { DollarSign, Users, Thermometer, Zap, ChevronsRight, ChevronsDown, Package, HeartPulse, Droplets, BedDouble, Building, Landmark, Globe } from 'lucide-react';
+
+// --- Dados Base de Custos (Valores Aproximados em BRL - Reais) ---
+// Estes são os valores de referência, que serão ajustados pelos multiplicadores.
+const baseEquipmentData = [
+  { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7, icon: <Package className="w-6 h-6 text-blue-500" /> },
+  { name: 'Monitor Multiparâmetros', cost: 35000, lifespanYears: 5, icon: <HeartPulse className="w-6 h-6 text-red-500" /> },
+  { name: 'Bomba de Infusão (x4)', cost: 20000, lifespanYears: 5, icon: <Droplets className="w-6 h-6 text-green-500" /> },
+  { name: 'Cama Hospitalar Elétrica', cost: 15000, lifespanYears: 10, icon: <BedDouble className="w-6 h-6 text-indigo-500" /> },
+  { name: 'Desfibrilador/Cardioversor', cost: 25000, lifespanYears: 7, icon: <Zap className="w-6 h-6 text-yellow-500" /> },
+  { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8, icon: <Package className="w-6 h-6 text-gray-500" /> },
+];
+
+const baseHumanResourcesData = [
+  { name: 'Médico Intensivista (Custo Total)', salary: 35000, icon: <Users className="w-6 h-6 text-teal-600" /> },
+  { name: 'Enfermeiro(a) Intensivista (Custo Total)', salary: 12000, icon: <Users className="w-6 h-6 text-cyan-600" /> },
+];
+
+const baseSuppliesData = [
+  { name: 'Medicamentos e Soluções', cost: 8000, icon: <Thermometer className="w-6 h-6 text-purple-500" /> },
+  { name: 'Materiais Descartáveis', cost: 4500, icon: <Package className="w-6 h-6 text-orange-500" /> },
+  { name: 'Gases Medicinais (Oxigênio)', cost: 2000, icon: <Zap className="w-6 h-6 text-sky-500" /> },
+];
+
+const baseOperationalData = [
+  { name: 'Energia, Água, Climatização', cost: 1500, icon: <Zap className="w-6 h-6 text-yellow-400" /> },
+  { name: 'Manutenção Preventiva e Limpeza', cost: 1000, icon: <Thermometer className="w-6 h-6 text-gray-400" /> },
+];
+
+// --- Multiplicadores por Nível de Gestão Específico ---
+const costMultipliers = {
+  Municipal: { hr: 0.80, supplies: 1.15, equipment: 1.10, label: 'Municipal (Equador-RN)', icon: <Building className="w-5 h-5 mr-2"/>, description: "Custos para um município de pequeno porte, com salários mais baixos mas custos de logística/escala mais altos para insumos e equipamentos." },
+  Estadual: { hr: 0.95, supplies: 1.00, equipment: 1.00, label: 'Estadual (RN)', icon: <Landmark className="w-5 h-5 mr-2"/>, description: "Custos para a gestão estadual do Rio Grande do Norte, com salários e poder de compra intermediários." },
+  Federal: { hr: 1.25, supplies: 0.90, equipment: 0.95, label: 'Federal (Brasil)', icon: <Globe className="w-5 h-5 mr-2"/>, description: "Custos para hospitais federais a nível Brasil, com salários mais altos e as melhores condições de compra centralizada." },
+};
+
+// --- Componentes da UI ---
+const CostCard = ({ title, monthlyCost, yearlyCost, icon, children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+      <div className="p-5 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="bg-gray-100 p-3 rounded-full">{icon}</div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+              <p className="text-sm text-gray-500">Clique para ver detalhes</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-semibold text-indigo-600">
+              {monthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / mês
+            </p>
+            <p className="text-sm text-gray-500">
+              {yearlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / ano
+            </p>
+          </div>
+           {isOpen ? <ChevronsDown className="w-6 h-6 text-gray-400" /> : <ChevronsRight className="w-6 h-6 text-gray-400" />}
+        </div>
+      </div>
+      {isOpen && (
+        <div className="bg-gray-50/50 p-5 border-t border-gray-200/80 animate-fade-in">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SectionTitle = ({ children }) => (
+  <h2 className="text-3xl font-extrabold text-gray-800 mb-4 text-center tracking-tight">{children}</h2>
+);
+
+const ManagementLevelSelector = ({ selectedLevel, setLevel }) => (
+  <div className="mb-10 p-2 bg-gray-200 rounded-full flex flex-col sm:flex-row items-center justify-center max-w-xl mx-auto shadow-inner">
+    {Object.keys(costMultipliers).map(level => (
+      <button
+        key={level}
+        onClick={() => setLevel(level)}
+        className={`w-full flex items-center justify-center text-center font-semibold py-3 px-2 sm:px-4 rounded-full transition-all duration-300 text-sm sm:text-base ${
+          selectedLevel === level 
+            ? 'bg-white text-indigo-600 shadow-md' 
+            : 'bg-transparent text-gray-600 hover:bg-gray-300/50'
+        }`}
+      >
+        {costMultipliers[level].icon}
+        {costMultipliers[level].label}
+      </button>
+    ))}
+  </div>
+);
+
+
+const App = () => {
+  const [managementLevel, setManagementLevel] = useState('Municipal');
+
+  const currentData = useMemo(() => {
+    const multipliers = costMultipliers[managementLevel];
+    return {
+      humanResources: baseHumanResourcesData.map(item => ({...item, salary: item.salary * multipliers.hr })),
+      equipment: baseEquipmentData.map(item => ({...item, cost: item.cost * multipliers.equipment })),
+      supplies: baseSuppliesData.map(item => ({...item, cost: item.cost * multipliers.supplies })),
+      operational: baseOperationalData, // Mantido constante para simplificação
+    };
+  }, [managementLevel]);
+  
+  const equipmentMonthlyCost = useMemo(() => 
+    currentData.equipment.reduce((acc, item) => acc + (item.cost / (item.lifespanYears * 12)), 0),
+    [currentData.equipment]
+  );
+  
+  const hrMonthlyCost = useMemo(() => currentData.humanResources.reduce((acc, item) => acc + item.salary, 0), [currentData.humanResources]);
+  const suppliesMonthlyCost = useMemo(() => currentData.supplies.reduce((acc, item) => acc + item.cost, 0), [currentData.supplies]);
+  const operationalMonthlyCost = useMemo(() => currentData.operational.reduce((acc, item) => acc + item.cost, 0), [currentData.operational]);
+
+  const totalMonthlyCost = equipmentMonthlyCost + hrMonthlyCost + suppliesMonthlyCost + operationalMonthlyCost;
+  const totalYearlyCost = totalMonthlyCost * 12;
+
+  const chartData = [
+    { name: 'Recursos Humanos', value: hrMonthlyCost },
+    { name: 'Equipamentos (Depreciação)', value: equipmentMonthlyCost },
+    { name: 'Insumos e Medicamentos', value: suppliesMonthlyCost },
+    { name: 'Custos Operacionais', value: operationalMonthlyCost },
+  ];
+
+  const COLORS = ['#4f46e5', '#10b981', '#8b5cf6', '#f59e0b'];
+
+  return (
+    <div className="bg-gray-50 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <header className="text-center mb-8">
+          <SectionTitle>Painel de Custos de UTI por Nível de Gestão</SectionTitle>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Selecione a esfera de gestão para visualizar a estimativa de custos para locais específicos.
+          </p>
+        </header>
+
+        <ManagementLevelSelector selectedLevel={managementLevel} setLevel={setManagementLevel} />
+        
+        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mb-12 max-w-4xl mx-auto shadow-sm">
+            <p className="font-bold">Cenário: {costMultipliers[managementLevel].label}</p>
+            <p className="text-sm">{costMultipliers[managementLevel].description}</p>
+        </div>
+
+
+        {/* --- Resumo e Gráficos --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80 flex flex-col justify-center items-center text-center">
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Custo Total Mensal</h3>
+            <p className="text-5xl font-extrabold text-indigo-600 mb-4 tracking-tight">
+              {totalMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </p>
+            <div className="bg-indigo-100 text-indigo-800 text-lg font-semibold px-4 py-2 rounded-full">
+              {totalYearlyCost.toLocaleString('pt-BR', { style: 'currency', 'currency': 'BRL' })} / Ano
+            </div>
+          </div>
+          <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Distribuição de Custos Mensais</h3>
+             <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={110}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                    return (
+                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="font-bold">
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
+                <Legend iconSize={12} wrapperStyle={{fontSize: "14px"}}/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* --- Detalhamento dos Custos --- */}
+        <div className="space-y-6">
+          <CostCard title="Recursos Humanos" monthlyCost={hrMonthlyCost} yearlyCost={hrMonthlyCost * 12} icon={<Users className="w-8 h-8 text-indigo-500" />}>
+             <ul className="space-y-3">
+              {currentData.humanResources.map(item => (
+                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                  <div className="flex items-center gap-3">{item.icon}<span className="text-gray-700">{item.name}</span></div>
+                  <span className="font-semibold text-gray-800">{item.salary.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                </li>
+              ))}
+            </ul>
+             <p className="text-xs text-gray-500 mt-4">* Custo total para a entidade pública, incluindo salário, benefícios e encargos.</p>
+          </CostCard>
+
+          <CostCard title="Equipamentos (Depreciação Mensal)" monthlyCost={equipmentMonthlyCost} yearlyCost={equipmentMonthlyCost * 12} icon={<DollarSign className="w-8 h-8 text-green-500" />}>
+             <ul className="space-y-3">
+              {currentData.equipment.map(item => (
+                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                   <div className="flex items-center gap-3">{item.icon}
+                    <div>
+                      <p className="text-gray-700">{item.name}</p>
+                      <p className="text-xs text-gray-500">Custo Adq.: {item.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | Vida útil: {item.lifespanYears} anos</p>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-gray-800">{(item.cost / (item.lifespanYears * 12)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                </li>
+              ))}
+            </ul>
+             <p className="text-xs text-gray-500 mt-4">* Custo de aquisição (influenciado pelo poder de compra) dividido pela vida útil em meses.</p>
+          </CostCard>
+
+          <CostCard title="Insumos e Medicamentos" monthlyCost={suppliesMonthlyCost} yearlyCost={suppliesMonthlyCost * 12} icon={<Thermometer className="w-8 h-8 text-purple-500" />}>
+             <ul className="space-y-3">
+              {currentData.supplies.map(item => (
+                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                  <div className="flex items-center gap-3">{item.icon}<span className="text-gray-700">{item.name}</span></div>
+                  <span className="font-semibold text-gray-800">{item.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                </li>
+              ))}
+            </ul>
+             <p className="text-xs text-gray-500 mt-4">* Custo de consumo mensal, que pode ser menor em compras de grande volume (Estadual/Federal).</p>
+          </CostCard>
+
+           <CostCard title="Custos Operacionais" monthlyCost={operationalMonthlyCost} yearlyCost={operationalMonthlyCost * 12} icon={<Zap className="w-8 h-8 text-yellow-500" />}>
+             <ul className="space-y-3">
+              {currentData.operational.map(item => (
+                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                  <div className="flex items-center gap-3">{item.icon}<span className="text-gray-700">{item.name}</span></div>
+                  <span className="font-semibold text-gray-800">{item.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                </li>
+              ))}
+            </ul>
+             <p className="text-xs text-gray-500 mt-4">* Rateio de custos gerais. Mantido constante para simplificação, mas pode variar.</p>
+          </CostCard>
+        </div>
+        <footer className="text-center mt-12 py-6 border-t border-gray-200">
+          <p className="text-sm text-gray-500">
+            Painel de Custos v2.1 | Valores são estimativas e podem variar conforme a região, fornecedores e políticas públicas.
+          </p>
+        </footer>
+      </div>
+       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { background-color: #f9fafb; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+      `}</style>
+    </div>
+  );
+};
+
+export default App;
