@@ -1,338 +1,354 @@
-import React, { useState, useMemo } from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { DollarSign, Users, Thermometer, Zap, ChevronsRight, ChevronsDown, Package, HeartPulse, Droplets, BedDouble, Building, Landmark, Globe, HelpCircle, BarChart2 } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infográfico: Custo de uma UTI no Brasil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Tailwind's gray-50 */
+        }
+        .text-balance { text-wrap: balance; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .donut-chart-container {
+             position: relative;
+             width: 100%;
+             max-width: 300px;
+             margin-left: auto;
+             margin-right: auto;
+             height: 300px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
 
-// --- Dados Base de Custos (Valores Aproximados em BRL - Reais) ---
-const baseEquipmentData = [
-  { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7, icon: <Package className="w-6 h-6 text-blue-500" /> },
-  { name: 'Monitor Multiparâmetros', cost: 35000, lifespanYears: 5, icon: <HeartPulse className="w-6 h-6 text-red-500" /> },
-  { name: 'Bomba de Infusão (x4)', cost: 20000, lifespanYears: 5, icon: <Droplets className="w-6 h-6 text-green-500" /> },
-  { name: 'Cama Hospitalar Elétrica', cost: 15000, lifespanYears: 10, icon: <BedDouble className="w-6 h-6 text-indigo-500" /> },
-  { name: 'Desfibrilador/Cardioversor', cost: 25000, lifespanYears: 7, icon: <Zap className="w-6 h-6 text-yellow-500" /> },
-  { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8, icon: <Package className="w-6 h-6 text-gray-500" /> },
-];
+    <header class="bg-[#05445E] text-white text-center py-12 px-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-balance">Quanto Custa um Leito de UTI no Brasil?</h1>
+        <p class="mt-4 max-w-3xl mx-auto text-lg text-[#D4F1F4] text-balance">
+            Uma análise comparativa dos custos operacionais para manter uma única vaga de terapia intensiva, variando conforme a esfera de gestão.
+        </p>
+    </header>
 
-const baseHumanResourcesData = [
-  { name: 'Médico Intensivista (Custo Total)', icon: <Users className="w-6 h-6 text-teal-600" /> },
-  { name: 'Enfermeiro(a) Intensivista (Custo Total)', icon: <Users className="w-6 h-6 text-cyan-600" /> },
-];
+    <main class="max-w-7xl mx-auto p-4 md:p-8">
 
-const baseSuppliesData = [
-  { name: 'Medicamentos e Soluções', cost: 8000, icon: <Thermometer className="w-6 h-6 text-purple-500" /> },
-  { name: 'Materiais Descartáveis', cost: 4500, icon: <Package className="w-6 h-6 text-orange-500" /> },
-  { name: 'Gases Medicinais (Oxigénio)', cost: 2000, icon: <Zap className="w-6 h-6 text-sky-500" /> },
-];
-
-const baseOperationalData = [
-  { name: 'Energia, Água, Climatização', cost: 1500, icon: <Zap className="w-6 h-6 text-yellow-400" /> },
-  { name: 'Manutenção Preventiva e Limpeza', cost: 1000, icon: <Thermometer className="w-6 h-6 text-gray-400" /> },
-];
-
-// --- Multiplicadores e Salários por Nível de Gestão Específico ---
-const costDataByLevel = {
-  Municipal: { 
-    hr_salaries: { 
-        'Médico Intensivista (Custo Total)': 8000, // Média de 4 plantões de R$2.000
-        'Enfermeiro(a) Intensivista (Custo Total)': 8550 // Piso de R$4.750 * ~1.8 (custo total)
-    },
-    supplies_multiplier: 1.15, 
-    equipment_multiplier: 1.10, 
-    label: 'Municipal (Equador-RN)', 
-    icon: <Building className="w-5 h-5 mr-2"/>, 
-    description: "Custos para Equador-RN: médico plantonista (média 4 plantões/mês) e enfermeiro(a) no piso nacional (custo total)." 
-  },
-  Estadual: { 
-    hr_salaries: { 
-        'Médico Intensivista (Custo Total)': 22000, // Proporcional
-        'Enfermeiro(a) Intensivista (Custo Total)': 12825 // Proporcional
-    },
-    supplies_multiplier: 1.00, 
-    equipment_multiplier: 1.00, 
-    label: 'Estadual (RN)', 
-    icon: <Landmark className="w-5 h-5 mr-2"/>, 
-    description: "Custos para a gestão estadual do RN, com salários proporcionalmente maiores e poder de compra consolidado." 
-  },
-  Federal: { 
-    hr_salaries: { 
-        'Médico Intensivista (Custo Total)': 35000, // Proporcional
-        'Enfermeiro(a) Intensivista (Custo Total)': 17100 // Proporcional
-    },
-    supplies_multiplier: 0.90, 
-    equipment_multiplier: 0.95, 
-    label: 'Federal (Brasil)', 
-    icon: <Globe className="w-5 h-5 mr-2"/>, 
-    description: "Custos para hospitais federais (nível Brasil), com salários mais altos e as melhores condições de compra centralizada." 
-  },
-};
-
-// --- Componentes da UI ---
-const CostCard = ({ title, monthlyCost, yearlyCost, icon, children }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transition-all duration-300 hover:shadow-xl">
-      <div className="p-5 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="bg-gray-100 p-3 rounded-full">{icon}</div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">{title}</h3>
-              <p className="text-sm text-gray-500">Clique para ver detalhes</p>
+        <section id="comparison" class="my-16">
+            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">O Custo Total: Uma Comparação Direta</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
+                O custo mensal para manter um leito de UTI varia drasticamente entre a gestão municipal, estadual e federal. A seguir, comparamos os custos totais estimados para cada cenário, evidenciando as diferenças no poder de compra e, principalmente, nos custos com recursos humanos.
+            </p>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                 <div class="chart-container">
+                    <canvas id="totalCostChart"></canvas>
+                </div>
             </div>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-semibold text-indigo-600">
-              {monthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / mês
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="composition" class="my-16">
+            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">A Composição dos Custos: Para Onde Vai o Dinheiro?</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
+                Embora o custo total mude, a proporção de cada categoria de despesa também se altera. Veja como os recursos humanos dominam os orçamentos, especialmente nos níveis estadual e federal, enquanto os custos com equipamentos e insumos têm um peso relativo menor.
             </p>
-            <p className="text-sm text-gray-500">
-              {yearlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / ano
-            </p>
-          </div>
-           {isOpen ? <ChevronsDown className="w-6 h-6 text-gray-400" /> : <ChevronsRight className="w-6 h-6 text-gray-400" />}
-        </div>
-      </div>
-      {isOpen && (
-        <div className="bg-gray-50/50 p-5 border-t border-gray-200/80 animate-fade-in">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const SectionTitle = ({ children, subtitle }) => (
-  <div className="text-center mb-12">
-    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">{children}</h2>
-    {subtitle && <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">{subtitle}</p>}
-  </div>
-);
-
-const ManagementLevelSelector = ({ selectedLevel, setLevel }) => (
-  <div className="mb-10 p-2 bg-gray-200 rounded-full flex flex-col sm:flex-row items-center justify-center max-w-xl mx-auto shadow-inner">
-    {Object.keys(costDataByLevel).map(level => (
-      <button
-        key={level}
-        onClick={() => setLevel(level)}
-        className={`w-full flex items-center justify-center text-center font-semibold py-3 px-2 sm:px-4 rounded-full transition-all duration-300 text-sm sm:text-base ${
-          selectedLevel === level 
-            ? 'bg-white text-indigo-600 shadow-md' 
-            : 'bg-transparent text-gray-600 hover:bg-gray-300/50'
-        }`}
-      >
-        {costDataByLevel[level].icon}
-        {costDataByLevel[level].label}
-      </button>
-    ))}
-  </div>
-);
-
-
-function App() {
-  const [managementLevel, setManagementLevel] = useState('Municipal');
-
-  const currentData = useMemo(() => {
-    const config = costDataByLevel[managementLevel];
-    return {
-      humanResources: baseHumanResourcesData.map(item => ({
-        ...item, 
-        salary: config.hr_salaries[item.name] || 0
-      })),
-      equipment: baseEquipmentData.map(item => ({...item, cost: item.cost * config.equipment_multiplier })),
-      supplies: baseSuppliesData.map(item => ({...item, cost: item.cost * config.supplies_multiplier })),
-      operational: baseOperationalData,
-    };
-  }, [managementLevel]);
-  
-  const equipmentMonthlyCost = useMemo(() => 
-    currentData.equipment.reduce((acc, item) => acc + (item.cost / (item.lifespanYears * 12)), 0),
-    [currentData.equipment]
-  );
-  
-  const hrMonthlyCost = useMemo(() => currentData.humanResources.reduce((acc, item) => acc + item.salary, 0), [currentData.humanResources]);
-  const suppliesMonthlyCost = useMemo(() => currentData.supplies.reduce((acc, item) => acc + item.cost, 0), [currentData.supplies]);
-  const operationalMonthlyCost = useMemo(() => currentData.operational.reduce((acc, item) => acc + item.cost, 0), [currentData.operational]);
-
-  const totalMonthlyCost = equipmentMonthlyCost + hrMonthlyCost + suppliesMonthlyCost + operationalMonthlyCost;
-  const totalYearlyCost = totalMonthlyCost * 12;
-
-  const chartData = [
-    { name: 'Recursos Humanos', value: hrMonthlyCost },
-    { name: 'Equipamentos (Depreciação)', value: equipmentMonthlyCost },
-    { name: 'Insumos e Medicamentos', value: suppliesMonthlyCost },
-    { name: 'Custos Operacionais', value: operationalMonthlyCost },
-  ];
-
-  const COLORS = ['#4f46e5', '#10b981', '#8b5cf6', '#f59e0b'];
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="p-2 bg-white border border-gray-300 rounded-lg shadow-lg">
-          <p className="font-bold text-gray-800">{`${payload[0].name}`}</p>
-          <p className="text-indigo-600">{`${payload[0].value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <div className="bg-gray-50 min-h-screen font-sans">
-      {/* Hero Section */}
-      <div className="bg-white">
-        <div className="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
-            <span className="block">Quanto custa para manter</span>
-            <span className="block text-indigo-600">uma UTI no Brasil?</span>
-          </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-gray-500">
-            Uma ferramenta interativa para simular e visualizar os custos operacionais de uma Unidade de Terapia Intensiva em diferentes esferas de gestão no Brasil.
-          </p>
-          <div className="mt-8">
-            <a href="#simulador" className="inline-block bg-indigo-600 text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-indigo-700 transition-colors duration-300">
-              Iniciar Simulação
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main id="simulador" className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <SectionTitle subtitle="Selecione um cenário para explorar os custos detalhados. Os valores são recalculados automaticamente.">
-          Simulador de Custos
-        </SectionTitle>
-
-        <ManagementLevelSelector selectedLevel={managementLevel} setLevel={setManagementLevel} />
-        
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mb-12 max-w-4xl mx-auto shadow-sm">
-            <p className="font-bold">Cenário Ativo: {costDataByLevel[managementLevel].label}</p>
-            <p className="text-sm">{costDataByLevel[managementLevel].description}</p>
-        </div>
-
-
-        {/* --- Resumo e Gráficos --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12 items-center">
-          <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80 flex flex-col justify-center items-center text-center h-full">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Custo Total Mensal Estimado</h3>
-            <p className="text-6xl font-extrabold text-indigo-600 my-4 tracking-tight">
-              {totalMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </p>
-            <div className="bg-indigo-100 text-indigo-800 text-lg font-semibold px-4 py-2 rounded-full">
-              {totalYearlyCost.toLocaleString('pt-BR', { style: 'currency', 'currency': 'BRL' })} / Ano
-            </div>
-          </div>
-          <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80 h-full">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center flex items-center justify-center gap-2"><BarChart2 size={24}/> Distribuição de Custos Mensais</h3>
-             <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={130}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                    return (
-                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="font-bold" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.4)' }}>
-                        {`${(percent * 100).toFixed(0)}%`}
-                      </text>
-                    );
-                  }}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend iconSize={12} wrapperStyle={{fontSize: "14px"}}/>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* --- Detalhamento dos Custos --- */}
-         <SectionTitle subtitle="Expanda cada categoria para uma análise aprofundada dos componentes de custo.">
-          Análise Detalhada
-        </SectionTitle>
-        <div className="space-y-6">
-          <CostCard title="Recursos Humanos" monthlyCost={hrMonthlyCost} yearlyCost={hrMonthlyCost * 12} icon={<Users className="w-8 h-8 text-indigo-500" />}>
-             <ul className="space-y-3">
-              {currentData.humanResources.map(item => (
-                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="flex items-center gap-3">{item.icon}<span className="text-gray-700">{item.name}</span></div>
-                  <span className="font-semibold text-gray-800">{item.salary.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </li>
-              ))}
-            </ul>
-             <p className="text-xs text-gray-500 mt-4">* Custo total para a entidade pública, incluindo salário, benefícios e encargos.</p>
-          </CostCard>
-
-          <CostCard title="Equipamentos (Depreciação Mensal)" monthlyCost={equipmentMonthlyCost} yearlyCost={equipmentMonthlyCost * 12} icon={<DollarSign className="w-8 h-8 text-green-500" />}>
-             <ul className="space-y-3">
-              {currentData.equipment.map(item => (
-                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                   <div className="flex items-center gap-3">{item.icon}
-                    <div>
-                      <p className="text-gray-700">{item.name}</p>
-                      <p className="text-xs text-gray-500">Custo Adq.: {item.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | Vida útil: {item.lifespanYears} anos</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                    <h3 class="text-xl font-bold mb-4">Municipal (Equador-RN)</h3>
+                    <div class="donut-chart-container">
+                        <canvas id="municipalDonut"></canvas>
                     </div>
-                  </div>
-                  <span className="font-semibold text-gray-800">{(item.cost / (item.lifespanYears * 12)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </li>
-              ))}
-            </ul>
-             <p className="text-xs text-gray-500 mt-4">* Custo de aquisição (influenciado pelo poder de compra) dividido pela vida útil em meses.</p>
-          </CostCard>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                    <h3 class="text-xl font-bold mb-4">Estadual (RN)</h3>
+                    <div class="donut-chart-container">
+                        <canvas id="estadualDonut"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                    <h3 class="text-xl font-bold mb-4">Federal (Brasil)</h3>
+                    <div class="donut-chart-container">
+                        <canvas id="federalDonut"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-          <CostCard title="Insumos e Medicamentos" monthlyCost={suppliesMonthlyCost} yearlyCost={suppliesMonthlyCost * 12} icon={<Thermometer className="w-8 h-8 text-purple-500" />}>
-             <ul className="space-y-3">
-              {currentData.supplies.map(item => (
-                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="flex items-center gap-3">{item.icon}<span className="text-gray-700">{item.name}</span></div>
-                  <span className="font-semibold text-gray-800">{item.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </li>
-              ))}
-            </ul>
-             <p className="text-xs text-gray-500 mt-4">* Custo de consumo mensal, que pode ser menor em compras de grande volume (Estadual/Federal).</p>
-          </CostCard>
+        <hr class="my-16 border-gray-200">
 
-           <CostCard title="Custos Operacionais" monthlyCost={operationalMonthlyCost} yearlyCost={operationalMonthlyCost * 12} icon={<Zap className="w-8 h-8 text-yellow-500" />}>
-             <ul className="space-y-3">
-              {currentData.operational.map(item => (
-                <li key={item.name} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="flex items-center gap-3">{item.icon}<span className="text-gray-700">{item.name}</span></div>
-                  <span className="font-semibold text-gray-800">{item.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </li>
-              ))}
-            </ul>
-             <p className="text-xs text-gray-500 mt-4">* Rateio de custos gerais. Mantido constante para simplificação, mas pode variar.</p>
-          </CostCard>
-        </div>
+        <section id="analysis" class="my-16">
+            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">Análise Detalhada: Fatores-Chave de Custo</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
+                Dois fatores explicam a maior parte da variação de custos: os salários dos profissionais de saúde e o poder de compra para equipamentos e insumos. Vamos analisar cada um em detalhe.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">🧑‍⚕️ O Peso dos Salários</h3>
+                    <p class="text-sm text-center text-gray-600 mb-6">A remuneração dos profissionais é o principal motor do custo total, com os hospitais federais apresentando os maiores valores, refletindo planos de carreira mais estruturados.</p>
+                    <div class="chart-container" style="height: 350px;">
+                        <canvas id="humanCostChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">🛒 Poder de Compra e Economia de Escala</h3>
+                    <p class="text-sm text-center text-gray-600 mb-6">Gestões estaduais e federais conseguem preços melhores em equipamentos e insumos devido a compras em grande volume. No entanto, essa economia é frequentemente superada pelos altos custos salariais.</p>
+                    <div class="space-y-4 mt-8">
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <h4 class="font-bold">Multiplicador de Custo - Equipamentos</h4>
+                            <div class="flex justify-around mt-2 text-center">
+                                <div><span class="text-2xl font-bold text-red-600">+10%</span><p class="text-sm">Municipal</p></div>
+                                <div><span class="text-2xl font-bold text-gray-600">0%</span><p class="text-sm">Estadual</p></div>
+                                <div><span class="text-2xl font-bold text-green-600">-5%</span><p class="text-sm">Federal</p></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <h4 class="font-bold">Multiplicador de Custo - Insumos</h4>
+                            <div class="flex justify-around mt-2 text-center">
+                                <div><span class="text-2xl font-bold text-red-600">+15%</span><p class="text-sm">Municipal</p></div>
+                                <div><span class="text-2xl font-bold text-gray-600">0%</span><p class="text-sm">Estadual</p></div>
+                                <div><span class="text-2xl font-bold text-green-600">-10%</span><p class="text-sm">Federal</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        {/* Methodology Section */}
-        <div className="mt-20 bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2"><HelpCircle size={24}/> Metodologia e Premissas</h3>
-            <div className="text-gray-600 space-y-2 text-sm">
-                <p><strong>1. Recursos Humanos:</strong> Os salários para o cenário municipal (Equador-RN) foram baseados nos dados fornecidos (piso da enfermagem e média de plantões médicos). Os valores para os níveis estadual e federal são projeções proporcionais, refletindo planos de carreira e concursos de maior remuneração. O "Custo Total" inclui uma estimativa de 1.8x sobre o salário base para cobrir encargos e benefícios.</p>
-                <p><strong>2. Equipamentos:</strong> O custo apresentado é a depreciação mensal, calculada dividindo o valor de mercado do equipamento pela sua vida útil em meses. Multiplicadores foram aplicados para simular o poder de compra de cada esfera (compras em maior escala tendem a ter menor custo unitário).</p>
-                <p><strong>3. Insumos e Medicamentos:</strong> Representa uma estimativa de consumo mensal para um leito de UTI. Assim como nos equipamentos, os multiplicadores refletem a capacidade de negociação e logística de cada nível de gestão.</p>
-                <p><strong>4. Custos Operacionais:</strong> Inclui despesas gerais como energia, água, limpeza e manutenção preventiva. Este valor foi mantido constante nos três cenários para simplificação, embora possa variar na realidade.</p>
-                <p className="font-bold mt-4">Aviso: Todos os valores são estimativas e servem para fins de demonstração. Os custos reais podem variar significativamente dependendo de contratos, fornecedores, localização e complexidade dos casos de pacientes.</p>
+    </main>
+
+    <footer class="bg-[#05445E] text-white text-center mt-16 py-8 px-4">
+        <h2 class="text-2xl font-bold">Principais Insights</h2>
+        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mt-6 text-left">
+            <div class="bg-[#189AB4] p-4 rounded-lg">
+                <h3 class="font-bold mb-2">1. RH é o Fator Dominante</h3>
+                <p class="text-sm text-balance">Recursos humanos representam a maior fatia dos custos em todos os cenários, superando 70% do total nos níveis estadual e federal.</p>
+            </div>
+            <div class="bg-[#189AB4] p-4 rounded-lg">
+                <h3 class="font-bold mb-2">2. Custo vs. Complexidade</h3>
+                <p class="text-sm text-balance">O menor custo municipal é explicado por salários mais baixos. Gestões maiores, embora mais caras, podem atrair e reter talentos com melhores planos de carreira.</p>
+            </div>
+            <div class="bg-[#189AB4] p-4 rounded-lg">
+                <h3 class="font-bold mb-2">3. Economia de Escala Limitada</h3>
+                <p class="text-sm text-balance">A economia obtida em compras de grande volume nos níveis estadual e federal não é suficiente para compensar os custos salariais significativamente mais altos.</p>
             </div>
         </div>
+        <p class="text-xs text-[#D4F1F4] mt-8">Fonte: Dados simulados com base na estrutura da planilha fornecida. Todos os valores são estimativas para fins de demonstração.</p>
+    </footer>
 
-        <footer className="text-center mt-16 py-6 border-t border-gray-200">
-          <p className="text-sm text-gray-500">
-            App de Simulação de Custos de UTI v3.0 
-          </p>
-        </footer>
-      </main>
-    </div>
-  );
-}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = {
+                base: {
+                    equipment: [
+                        { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7 },
+                        { name: ['Monitor', 'Multiparâmetros'], cost: 35000, lifespanYears: 5 },
+                        { name: 'Bomba de Infusão (x4)', cost: 20000, lifespanYears: 5 },
+                        { name: ['Cama Hospitalar', 'Elétrica'], cost: 15000, lifespanYears: 10 },
+                        { name: 'Desfibrilador/Cardioversor', cost: 25000, lifespanYears: 7 },
+                        { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8 },
+                    ],
+                    supplies: [
+                        { name: ['Medicamentos e', 'Soluções'], cost: 8000 },
+                        { name: 'Materiais Descartáveis', cost: 4500 },
+                        { name: 'Gases Medicinais (Oxigénio)', cost: 2000 },
+                    ],
+                    operational: [
+                        { name: ['Energia, Água,', 'Climatização'], cost: 1500 },
+                        { name: ['Manutenção e', 'Limpeza'], cost: 1000 },
+                    ]
+                },
+                scenarios: {
+                    Municipal: { name: 'Municipal', hr: 9000 + 8550, supplies_multiplier: 1.15, equipment_multiplier: 1.10, color: '#75E6DA' },
+                    Estadual: { name: 'Estadual', hr: 22000 + 12825, supplies_multiplier: 1.00, equipment_multiplier: 1.00, color: '#189AB4' },
+                    Federal: { name: 'Federal', hr: 35000 + 17100, supplies_multiplier: 0.90, equipment_multiplier: 0.95, color: '#05445E' },
+                },
+                hrCosts: {
+                    medico: { Municipal: 9000, Estadual: 22000, Federal: 35000 },
+                    enfermeiro: { Municipal: 8550, Estadual: 12825, Federal: 17100 },
+                }
+            };
 
-export default App;
+            const calculateCosts = (scenarioKey) => {
+                const scenario = data.scenarios[scenarioKey];
+                const equipment = data.base.equipment.reduce((acc, item) => acc + (item.cost * scenario.equipment_multiplier) / (item.lifespanYears * 12), 0);
+                const supplies = data.base.supplies.reduce((acc, item) => acc + (item.cost * scenario.supplies_multiplier), 0);
+                const operational = data.base.operational.reduce((acc, item) => acc + item.cost, 0);
+                const hr = scenario.hr;
+                return {
+                    hr,
+                    equipment,
+                    supplies,
+                    operational,
+                    total: hr + equipment + supplies + operational
+                };
+            };
+            
+            const costResults = {
+                Municipal: calculateCosts('Municipal'),
+                Estadual: calculateCosts('Estadual'),
+                Federal: calculateCosts('Federal'),
+            };
+
+            const formatCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            const chartTooltipOptions = {
+                callbacks: {
+                    title: function(tooltipItems) {
+                        const item = tooltipItems[0];
+                        let label = item.chart.data.labels[item.dataIndex];
+                        return Array.isArray(label) ? label.join(' ') : label;
+                    },
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += formatCurrency(context.parsed.y);
+                        }
+                        return label;
+                    }
+                }
+            };
+            
+            const donutTooltipOptions = {
+                 callbacks: {
+                    title: function(tooltipItems) {
+                        const item = tooltipItems[0];
+                        let label = item.chart.data.labels[item.dataIndex];
+                        return Array.isArray(label) ? label.join(' ') : label;
+                    },
+                    label: function(context) {
+                        let value = context.parsed;
+                        let total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        let percentage = ((value / total) * 100).toFixed(0) + '%';
+                        return `${formatCurrency(value)} (${percentage})`;
+                    }
+                }
+            };
+
+            const brilliantBlues = {
+                dark: '#05445E',
+                medium: '#189AB4',
+                light: '#75E6DA',
+                lightest: '#D4F1F4'
+            };
+
+            new Chart(document.getElementById('totalCostChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Municipal (Equador-RN)', 'Estadual (RN)', 'Federal (Brasil)'],
+                    datasets: [{
+                        label: 'Custo Mensal Total',
+                        data: [costResults.Municipal.total, costResults.Estadual.total, costResults.Federal.total],
+                        backgroundColor: [brilliantBlues.light, brilliantBlues.medium, brilliantBlues.dark],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: chartTooltipOptions
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => formatCurrency(value)
+                            }
+                        }
+                    }
+                }
+            });
+
+            const createDonut = (canvasId, data, title) => {
+                new Chart(document.getElementById(canvasId), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Recursos Humanos', 'Equipamentos', 'Insumos', 'Operacional'],
+                        datasets: [{
+                            data: [data.hr, data.equipment, data.supplies, data.operational],
+                            backgroundColor: [brilliantBlues.dark, brilliantBlues.medium, brilliantBlues.light, brilliantBlues.lightest],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    boxWidth: 12
+                                }
+                            },
+                            tooltip: donutTooltipOptions
+                        }
+                    }
+                });
+            };
+
+            createDonut('municipalDonut', costResults.Municipal, 'Municipal');
+            createDonut('estadualDonut', costResults.Estadual, 'Estadual');
+            createDonut('federalDonut', costResults.Federal, 'Federal');
+            
+            new Chart(document.getElementById('humanCostChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Municipal', 'Estadual', 'Federal'],
+                    datasets: [
+                        {
+                            label: 'Custo Médico',
+                            data: Object.values(data.hrCosts.medico),
+                            backgroundColor: brilliantBlues.dark,
+                        },
+                        {
+                            label: 'Custo Enfermeiro(a)',
+                            data: Object.values(data.hrCosts.enfermeiro),
+                            backgroundColor: brilliantBlues.medium,
+                        }
+                    ]
+                },
+                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: chartTooltipOptions
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => formatCurrency(value)
+                            }
+                        },
+                        x: {
+                           grid: { display: false }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
