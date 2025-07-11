@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { DollarSign, Users, Thermometer, Zap, ChevronsRight, ChevronsDown, Package, HeartPulse, Droplets, BedDouble, Building, Landmark, Globe } from 'lucide-react';
 
 // --- Dados Base de Custos (Valores Aproximados em BRL - Reais) ---
-// Estes são os valores de referência, que serão ajustados pelos multiplicadores.
+// Estes são os valores de referência para equipamentos e insumos. RH agora é calculado separadamente.
 const baseEquipmentData = [
   { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7, icon: <Package className="w-6 h-6 text-blue-500" /> },
   { name: 'Monitor Multiparâmetros', cost: 35000, lifespanYears: 5, icon: <HeartPulse className="w-6 h-6 text-red-500" /> },
@@ -13,9 +13,10 @@ const baseEquipmentData = [
   { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8, icon: <Package className="w-6 h-6 text-gray-500" /> },
 ];
 
+// Apenas a estrutura dos profissionais. Os salários virão do objeto 'costMultipliers'.
 const baseHumanResourcesData = [
-  { name: 'Médico Intensivista (Custo Total)', salary: 35000, icon: <Users className="w-6 h-6 text-teal-600" /> },
-  { name: 'Enfermeiro(a) Intensivista (Custo Total)', salary: 12000, icon: <Users className="w-6 h-6 text-cyan-600" /> },
+  { name: 'Médico Intensivista (Custo Total)', icon: <Users className="w-6 h-6 text-teal-600" /> },
+  { name: 'Enfermeiro(a) Intensivista (Custo Total)', icon: <Users className="w-6 h-6 text-cyan-600" /> },
 ];
 
 const baseSuppliesData = [
@@ -29,11 +30,41 @@ const baseOperationalData = [
   { name: 'Manutenção Preventiva e Limpeza', cost: 1000, icon: <Thermometer className="w-6 h-6 text-gray-400" /> },
 ];
 
-// --- Multiplicadores por Nível de Gestão Específico ---
-const costMultipliers = {
-  Municipal: { hr: 0.80, supplies: 1.15, equipment: 1.10, label: 'Municipal (Equador-RN)', icon: <Building className="w-5 h-5 mr-2"/>, description: "Custos para um município de pequeno porte, com salários mais baixos mas custos de logística/escala mais altos para insumos e equipamentos." },
-  Estadual: { hr: 0.95, supplies: 1.00, equipment: 1.00, label: 'Estadual (RN)', icon: <Landmark className="w-5 h-5 mr-2"/>, description: "Custos para a gestão estadual do Rio Grande do Norte, com salários e poder de compra intermediários." },
-  Federal: { hr: 1.25, supplies: 0.90, equipment: 0.95, label: 'Federal (Brasil)', icon: <Globe className="w-5 h-5 mr-2"/>, description: "Custos para hospitais federais a nível Brasil, com salários mais altos e as melhores condições de compra centralizada." },
+// --- Multiplicadores e Salários por Nível de Gestão Específico ---
+const costDataByLevel = {
+  Municipal: { 
+    hr_salaries: { 
+        'Médico Intensivista (Custo Total)': 8000, // Média de 4 plantões de R$2.000
+        'Enfermeiro(a) Intensivista (Custo Total)': 8550 // Piso de R$4.750 * ~1.8 (custo total)
+    },
+    supplies_multiplier: 1.15, 
+    equipment_multiplier: 1.10, 
+    label: 'Municipal (Equador-RN)', 
+    icon: <Building className="w-5 h-5 mr-2"/>, 
+    description: "Custos para Equador-RN: médico plantonista (média 4 plantões/mês) e enfermeiro(a) no piso nacional (custo total)." 
+  },
+  Estadual: { 
+    hr_salaries: { 
+        'Médico Intensivista (Custo Total)': 22000, // Proporcional
+        'Enfermeiro(a) Intensivista (Custo Total)': 12825 // Proporcional
+    },
+    supplies_multiplier: 1.00, 
+    equipment_multiplier: 1.00, 
+    label: 'Estadual (RN)', 
+    icon: <Landmark className="w-5 h-5 mr-2"/>, 
+    description: "Custos para a gestão estadual do RN, com salários proporcionalmente maiores e poder de compra consolidado." 
+  },
+  Federal: { 
+    hr_salaries: { 
+        'Médico Intensivista (Custo Total)': 35000, // Proporcional
+        'Enfermeiro(a) Intensivista (Custo Total)': 17100 // Proporcional
+    },
+    supplies_multiplier: 0.90, 
+    equipment_multiplier: 0.95, 
+    label: 'Federal (Brasil)', 
+    icon: <Globe className="w-5 h-5 mr-2"/>, 
+    description: "Custos para hospitais federais (nível Brasil), com salários mais altos e as melhores condições de compra centralizada." 
+  },
 };
 
 // --- Componentes da UI ---
@@ -76,7 +107,7 @@ const SectionTitle = ({ children }) => (
 
 const ManagementLevelSelector = ({ selectedLevel, setLevel }) => (
   <div className="mb-10 p-2 bg-gray-200 rounded-full flex flex-col sm:flex-row items-center justify-center max-w-xl mx-auto shadow-inner">
-    {Object.keys(costMultipliers).map(level => (
+    {Object.keys(costDataByLevel).map(level => (
       <button
         key={level}
         onClick={() => setLevel(level)}
@@ -86,8 +117,8 @@ const ManagementLevelSelector = ({ selectedLevel, setLevel }) => (
             : 'bg-transparent text-gray-600 hover:bg-gray-300/50'
         }`}
       >
-        {costMultipliers[level].icon}
-        {costMultipliers[level].label}
+        {costDataByLevel[level].icon}
+        {costDataByLevel[level].label}
       </button>
     ))}
   </div>
@@ -98,12 +129,15 @@ const App = () => {
   const [managementLevel, setManagementLevel] = useState('Municipal');
 
   const currentData = useMemo(() => {
-    const multipliers = costMultipliers[managementLevel];
+    const config = costDataByLevel[managementLevel];
     return {
-      humanResources: baseHumanResourcesData.map(item => ({...item, salary: item.salary * multipliers.hr })),
-      equipment: baseEquipmentData.map(item => ({...item, cost: item.cost * multipliers.equipment })),
-      supplies: baseSuppliesData.map(item => ({...item, cost: item.cost * multipliers.supplies })),
-      operational: baseOperationalData, // Mantido constante para simplificação
+      humanResources: baseHumanResourcesData.map(item => ({
+        ...item, 
+        salary: config.hr_salaries[item.name] || 0
+      })),
+      equipment: baseEquipmentData.map(item => ({...item, cost: item.cost * config.equipment_multiplier })),
+      supplies: baseSuppliesData.map(item => ({...item, cost: item.cost * config.supplies_multiplier })),
+      operational: baseOperationalData,
     };
   }, [managementLevel]);
   
@@ -141,8 +175,8 @@ const App = () => {
         <ManagementLevelSelector selectedLevel={managementLevel} setLevel={setManagementLevel} />
         
         <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mb-12 max-w-4xl mx-auto shadow-sm">
-            <p className="font-bold">Cenário: {costMultipliers[managementLevel].label}</p>
-            <p className="text-sm">{costMultipliers[managementLevel].description}</p>
+            <p className="font-bold">Cenário: {costDataByLevel[managementLevel].label}</p>
+            <p className="text-sm">{costDataByLevel[managementLevel].description}</p>
         </div>
 
 
@@ -248,7 +282,7 @@ const App = () => {
         </div>
         <footer className="text-center mt-12 py-6 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            Painel de Custos v2.1 | Valores são estimativas e podem variar conforme a região, fornecedores e políticas públicas.
+            Painel de Custos v2.2 | Valores são estimativas e podem variar conforme a região, fornecedores e políticas públicas.
           </p>
         </footer>
       </div>
