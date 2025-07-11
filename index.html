@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { DollarSign, Users, Thermometer, Zap, ChevronsRight, ChevronsDown, Package, HeartPulse, Droplets, BedDouble, Building, Landmark, Globe } from 'lucide-react';
+import { DollarSign, Users, Thermometer, Zap, ChevronsRight, ChevronsDown, Package, HeartPulse, Droplets, BedDouble, Building, Landmark, Globe, HelpCircle, BarChart2 } from 'lucide-react';
 
 // --- Dados Base de Custos (Valores Aproximados em BRL - Reais) ---
-// Estes são os valores de referência para equipamentos e insumos. RH agora é calculado separadamente.
 const baseEquipmentData = [
   { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7, icon: <Package className="w-6 h-6 text-blue-500" /> },
   { name: 'Monitor Multiparâmetros', cost: 35000, lifespanYears: 5, icon: <HeartPulse className="w-6 h-6 text-red-500" /> },
@@ -13,7 +12,6 @@ const baseEquipmentData = [
   { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8, icon: <Package className="w-6 h-6 text-gray-500" /> },
 ];
 
-// Apenas a estrutura dos profissionais. Os salários virão do objeto 'costMultipliers'.
 const baseHumanResourcesData = [
   { name: 'Médico Intensivista (Custo Total)', icon: <Users className="w-6 h-6 text-teal-600" /> },
   { name: 'Enfermeiro(a) Intensivista (Custo Total)', icon: <Users className="w-6 h-6 text-cyan-600" /> },
@@ -22,7 +20,7 @@ const baseHumanResourcesData = [
 const baseSuppliesData = [
   { name: 'Medicamentos e Soluções', cost: 8000, icon: <Thermometer className="w-6 h-6 text-purple-500" /> },
   { name: 'Materiais Descartáveis', cost: 4500, icon: <Package className="w-6 h-6 text-orange-500" /> },
-  { name: 'Gases Medicinais (Oxigênio)', cost: 2000, icon: <Zap className="w-6 h-6 text-sky-500" /> },
+  { name: 'Gases Medicinais (Oxigénio)', cost: 2000, icon: <Zap className="w-6 h-6 text-sky-500" /> },
 ];
 
 const baseOperationalData = [
@@ -71,7 +69,7 @@ const costDataByLevel = {
 const CostCard = ({ title, monthlyCost, yearlyCost, icon, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden transition-all duration-300 hover:shadow-xl">
       <div className="p-5 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -101,8 +99,11 @@ const CostCard = ({ title, monthlyCost, yearlyCost, icon, children }) => {
   );
 };
 
-const SectionTitle = ({ children }) => (
-  <h2 className="text-3xl font-extrabold text-gray-800 mb-4 text-center tracking-tight">{children}</h2>
+const SectionTitle = ({ children, subtitle }) => (
+  <div className="text-center mb-12">
+    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">{children}</h2>
+    {subtitle && <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">{subtitle}</p>}
+  </div>
 );
 
 const ManagementLevelSelector = ({ selectedLevel, setLevel }) => (
@@ -163,44 +164,60 @@ const App = () => {
   const COLORS = ['#4f46e5', '#10b981', '#8b5cf6', '#f59e0b'];
 
   return (
-    <div className="bg-gray-50 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="text-center mb-8">
-          <SectionTitle>Painel de Custos de UTI por Nível de Gestão</SectionTitle>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Selecione a esfera de gestão para visualizar a estimativa de custos para locais específicos.
+    <div className="bg-gray-50 min-h-screen font-sans">
+      {/* Hero Section */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
+            <span className="block">Quanto custa para manter</span>
+            <span className="block text-indigo-600">uma UTI no Brasil?</span>
+          </h1>
+          <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-gray-500">
+            Uma ferramenta interativa para simular e visualizar os custos operacionais de uma Unidade de Terapia Intensiva em diferentes esferas de gestão no Brasil.
           </p>
-        </header>
+          <div className="mt-8">
+            <a href="#simulador" className="inline-block bg-indigo-600 text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-indigo-700 transition-colors duration-300">
+              Iniciar Simulação
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div id="simulador" className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <SectionTitle subtitle="Selecione um cenário para explorar os custos detalhados. Os valores são recalculados automaticamente.">
+          Simulador de Custos
+        </SectionTitle>
 
         <ManagementLevelSelector selectedLevel={managementLevel} setLevel={setManagementLevel} />
         
         <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mb-12 max-w-4xl mx-auto shadow-sm">
-            <p className="font-bold">Cenário: {costDataByLevel[managementLevel].label}</p>
+            <p className="font-bold">Cenário Ativo: {costDataByLevel[managementLevel].label}</p>
             <p className="text-sm">{costDataByLevel[managementLevel].description}</p>
         </div>
 
 
         {/* --- Resumo e Gráficos --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80 flex flex-col justify-center items-center text-center">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Custo Total Mensal</h3>
-            <p className="text-5xl font-extrabold text-indigo-600 mb-4 tracking-tight">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12 items-center">
+          <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80 flex flex-col justify-center items-center text-center h-full">
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Custo Total Mensal Estimado</h3>
+            <p className="text-6xl font-extrabold text-indigo-600 my-4 tracking-tight">
               {totalMonthlyCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </p>
             <div className="bg-indigo-100 text-indigo-800 text-lg font-semibold px-4 py-2 rounded-full">
               {totalYearlyCost.toLocaleString('pt-BR', { style: 'currency', 'currency': 'BRL' })} / Ano
             </div>
           </div>
-          <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Distribuição de Custos Mensais</h3>
-             <ResponsiveContainer width="100%" height={300}>
+          <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-lg border border-gray-200/80 h-full">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center flex items-center justify-center gap-2"><BarChart2 size={24}/> Distribuição de Custos Mensais</h3>
+             <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={110}
+                  outerRadius={130}
                   fill="#8884d8"
                   dataKey="value"
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -208,7 +225,7 @@ const App = () => {
                     const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
                     const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                     return (
-                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="font-bold">
+                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="font-bold text-shadow">
                         {`${(percent * 100).toFixed(0)}%`}
                       </text>
                     );
@@ -226,6 +243,9 @@ const App = () => {
         </div>
 
         {/* --- Detalhamento dos Custos --- */}
+         <SectionTitle subtitle="Expanda cada categoria para uma análise aprofundada dos componentes de custo.">
+          Análise Detalhada
+        </SectionTitle>
         <div className="space-y-6">
           <CostCard title="Recursos Humanos" monthlyCost={hrMonthlyCost} yearlyCost={hrMonthlyCost * 12} icon={<Users className="w-8 h-8 text-indigo-500" />}>
              <ul className="space-y-3">
@@ -280,14 +300,28 @@ const App = () => {
              <p className="text-xs text-gray-500 mt-4">* Rateio de custos gerais. Mantido constante para simplificação, mas pode variar.</p>
           </CostCard>
         </div>
-        <footer className="text-center mt-12 py-6 border-t border-gray-200">
+
+        {/* Methodology Section */}
+        <div className="mt-20 bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2"><HelpCircle size={24}/> Metodologia e Premissas</h3>
+            <div className="text-gray-600 space-y-2 text-sm">
+                <p><strong>1. Recursos Humanos:</strong> Os salários para o cenário municipal (Equador-RN) foram baseados nos dados fornecidos (piso da enfermagem e média de plantões médicos). Os valores para os níveis estadual e federal são projeções proporcionais, refletindo planos de carreira e concursos de maior remuneração. O "Custo Total" inclui uma estimativa de 1.8x sobre o salário base para cobrir encargos e benefícios.</p>
+                <p><strong>2. Equipamentos:</strong> O custo apresentado é a depreciação mensal, calculada dividindo o valor de mercado do equipamento pela sua vida útil em meses. Multiplicadores foram aplicados para simular o poder de compra de cada esfera (compras em maior escala tendem a ter menor custo unitário).</p>
+                <p><strong>3. Insumos e Medicamentos:</strong> Representa uma estimativa de consumo mensal para um leito de UTI. Assim como nos equipamentos, os multiplicadores refletem a capacidade de negociação e logística de cada nível de gestão.</p>
+                <p><strong>4. Custos Operacionais:</strong> Inclui despesas gerais como energia, água, limpeza e manutenção preventiva. Este valor foi mantido constante nos três cenários para simplificação, embora possa variar na realidade.</p>
+                <p className="font-bold mt-4">Aviso: Todos os valores são estimativas e servem para fins de demonstração. Os custos reais podem variar significativamente dependendo de contratos, fornecedores, localização e complexidade dos casos de pacientes.</p>
+            </div>
+        </div>
+
+        <footer className="text-center mt-16 py-6 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            Painel de Custos v2.2 | Valores são estimativas e podem variar conforme a região, fornecedores e políticas públicas.
+            App de Simulação de Custos de UTI v3.0 
           </p>
         </footer>
       </div>
        <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        html { scroll-behavior: smooth; }
         body { background-color: #f9fafb; }
         .font-sans { font-family: 'Inter', sans-serif; }
         @keyframes fade-in {
@@ -295,6 +329,7 @@ const App = () => {
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        .text-shadow { text-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
       `}</style>
     </div>
   );
