@@ -48,9 +48,9 @@
     <main class="max-w-7xl mx-auto p-4 md:p-8">
 
         <section id="comparison" class="my-16">
-            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">O Custo Total: Uma Comparação Direta</h2>
+            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">Custo Mensal por Leito: Uma Comparação Direta</h2>
             <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
-                O custo mensal para manter um leito de UTI varia drasticamente entre a gestão municipal, estadual e federal. A seguir, comparamos os custos totais estimados para cada cenário, evidenciando as diferenças no poder de compra e, principalmente, nos custos com recursos humanos.
+                O custo para manter um leito de UTI varia drasticamente entre as gestões. A seguir, comparamos os custos totais estimados para cada cenário, evidenciando as diferenças no poder de compra e, principalmente, nos custos com recursos humanos.
             </p>
             <div class="bg-white p-6 rounded-2xl shadow-lg">
                  <div class="chart-container">
@@ -64,7 +64,7 @@
         <section id="composition" class="my-16">
             <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">A Composição dos Custos: Para Onde Vai o Dinheiro?</h2>
             <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
-                Embora o custo total mude, a proporção de cada categoria de despesa também se altera. Veja como os recursos humanos dominam os orçamentos, especialmente nos níveis estadual e federal, enquanto os custos com equipamentos e insumos têm um peso relativo menor.
+                Embora o custo total mude, a proporção de cada despesa também se altera. Veja como os recursos humanos dominam os orçamentos, especialmente nos níveis estadual e federal, enquanto os custos com equipamentos e insumos têm um peso relativo menor.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
@@ -87,6 +87,17 @@
                 </div>
             </div>
         </section>
+        
+        <hr class="my-16 border-gray-200">
+
+        <section id="equipment" class="my-16">
+            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">O Investimento Inicial: Equipamentos Essenciais</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
+                Para além do custo mensal, a montagem de um leito de UTI exige um investimento inicial significativo em equipamentos. Apresentamos abaixo os custos de aquisição estimados para os itens essenciais. O custo mensal nos nossos cálculos é a depreciação destes valores ao longo da sua vida útil.
+            </p>
+            <div id="equipmentList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
 
         <hr class="my-16 border-gray-200">
 
@@ -98,14 +109,14 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     <h3 class="text-xl font-bold mb-4 text-center">🧑‍⚕️ O Peso dos Salários</h3>
-                    <p class="text-sm text-center text-gray-600 mb-6">A remuneração dos profissionais é o principal motor do custo total, com os hospitais federais apresentando os maiores valores, refletindo planos de carreira mais estruturados.</p>
+                    <p class="text-sm text-center text-gray-600 mb-6">A remuneração dos profissionais é o principal motor do custo total. Os valores apresentados representam o custo total para o empregador (salário + encargos).</p>
                     <div class="chart-container" style="height: 350px;">
                         <canvas id="humanCostChart"></canvas>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-bold mb-4 text-center">🛒 Poder de Compra e Economia de Escala</h3>
-                    <p class="text-sm text-center text-gray-600 mb-6">Gestões estaduais e federais conseguem preços melhores em equipamentos e insumos devido a compras em grande volume. No entanto, essa economia é frequentemente superada pelos altos custos salariais.</p>
+                    <h3 class="text-xl font-bold mb-4 text-center">🛒 O Efeito da Escala: Poder de Compra</h3>
+                    <p class="text-sm text-center text-gray-600 mb-6">Gestões estaduais e federais conseguem preços melhores em equipamentos e insumos devido a compras em grande volume. Esta variação é representada por um multiplicador sobre o custo base.</p>
                     <div class="space-y-4 mt-8">
                         <div class="bg-gray-100 p-4 rounded-lg">
                             <h4 class="font-bold">Multiplicador de Custo - Equipamentos</h4>
@@ -131,22 +142,15 @@
     </main>
 
     <footer class="bg-[#05445E] text-white text-center mt-16 py-8 px-4">
-        <h2 class="text-2xl font-bold">Principais Insights</h2>
-        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mt-6 text-left">
-            <div class="bg-[#189AB4] p-4 rounded-lg">
-                <h3 class="font-bold mb-2">1. RH é o Fator Dominante</h3>
-                <p class="text-sm text-balance">Recursos humanos representam a maior fatia dos custos em todos os cenários, superando 70% do total nos níveis estadual e federal.</p>
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold">Metodologia e Premissas</h2>
+            <div class="mt-4 text-sm text-left bg-[#189AB4] p-4 rounded-lg text-balance">
+                <p><strong>• Custo de RH:</strong> O custo do enfermeiro(a) municipal considera o piso nacional (R$ 4.750) acrescido de ~80% de encargos. O custo médico municipal reflete uma média de 4.5 plantões de R$ 2.000. Os demais níveis são projeções proporcionais. </p>
+                <p><strong>• Custo de Equipamentos:</strong> O custo mensal é a depreciação do valor de aquisição, dividido pela vida útil do equipamento em meses.</p>
+                <p><strong>• Multiplicadores:</strong> Simulam o poder de compra de cada esfera. Um valor positivo (ex: +10%) representa um custo maior em relação à base; um negativo representa economia.</p>
             </div>
-            <div class="bg-[#189AB4] p-4 rounded-lg">
-                <h3 class="font-bold mb-2">2. Custo vs. Complexidade</h3>
-                <p class="text-sm text-balance">O menor custo municipal é explicado por salários mais baixos. Gestões maiores, embora mais caras, podem atrair e reter talentos com melhores planos de carreira.</p>
-            </div>
-            <div class="bg-[#189AB4] p-4 rounded-lg">
-                <h3 class="font-bold mb-2">3. Economia de Escala Limitada</h3>
-                <p class="text-sm text-balance">A economia obtida em compras de grande volume nos níveis estadual e federal não é suficiente para compensar os custos salariais significativamente mais altos.</p>
-            </div>
+            <p class="text-xs text-[#D4F1F4] mt-8">Fonte: Dados simulados com base na estrutura da planilha fornecida. Todos os valores são estimativas para fins de demonstração.</p>
         </div>
-        <p class="text-xs text-[#D4F1F4] mt-8">Fonte: Dados simulados com base na estrutura da planilha fornecida. Todos os valores são estimativas para fins de demonstração.</p>
     </footer>
 
     <script>
@@ -154,12 +158,12 @@
             const data = {
                 base: {
                     equipment: [
-                        { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7 },
-                        { name: ['Monitor', 'Multiparâmetros'], cost: 35000, lifespanYears: 5 },
-                        { name: 'Bomba de Infusão (x4)', cost: 20000, lifespanYears: 5 },
-                        { name: ['Cama Hospitalar', 'Elétrica'], cost: 15000, lifespanYears: 10 },
-                        { name: 'Desfibrilador/Cardioversor', cost: 25000, lifespanYears: 7 },
-                        { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8 },
+                        { name: 'Ventilador Mecânico', cost: 80000, lifespanYears: 7, icon: '🌬️' },
+                        { name: 'Monitor Multiparâmetros', cost: 35000, lifespanYears: 5, icon: '❤️' },
+                        { name: 'Bomba de Infusão (x4)', cost: 20000, lifespanYears: 5, icon: '💧' },
+                        { name: 'Cama Hospitalar Elétrica', cost: 15000, lifespanYears: 10, icon: '🛏️' },
+                        { name: 'Desfibrilador/Cardioversor', cost: 25000, lifespanYears: 7, icon: '⚡' },
+                        { name: 'Outros (Aspirador, etc.)', cost: 10000, lifespanYears: 8, icon: '📦' },
                     ],
                     supplies: [
                         { name: ['Medicamentos e', 'Soluções'], cost: 8000 },
@@ -182,6 +186,22 @@
                 }
             };
 
+            const formatCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            const equipmentListContainer = document.getElementById('equipmentList');
+            data.base.equipment.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-2xl shadow-lg flex items-center';
+                card.innerHTML = `
+                    <div class="text-4xl mr-4">${item.icon}</div>
+                    <div>
+                        <h4 class="font-bold text-gray-800">${item.name}</h4>
+                        <p class="text-lg font-semibold text-[#05445E]">${formatCurrency(item.cost)}</p>
+                    </div>
+                `;
+                equipmentListContainer.appendChild(card);
+            });
+
             const calculateCosts = (scenarioKey) => {
                 const scenario = data.scenarios[scenarioKey];
                 const equipment = data.base.equipment.reduce((acc, item) => acc + (item.cost * scenario.equipment_multiplier) / (item.lifespanYears * 12), 0);
@@ -202,8 +222,6 @@
                 Estadual: calculateCosts('Estadual'),
                 Federal: calculateCosts('Federal'),
             };
-
-            const formatCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             const chartTooltipOptions = {
                 callbacks: {
