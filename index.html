@@ -7,10 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Tailwind's gray-50 */
+            background-color: #f8fafc;
+            scroll-behavior: smooth;
         }
         .text-balance { text-wrap: balance; }
         .chart-container {
@@ -34,53 +35,62 @@
              margin-right: auto;
              height: 300px;
         }
+        .animated-section {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .animated-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-gray-800 antialiased">
 
-    <header class="bg-[#05445E] text-white text-center py-12 px-4">
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-balance">Quanto Custa um Leito de UTI no Brasil?</h1>
-        <p class="mt-4 max-w-3xl mx-auto text-lg text-[#D4F1F4] text-balance">
-            Uma análise comparativa dos custos operacionais para manter uma única vaga de terapia intensiva, variando conforme a esfera de gestão.
-        </p>
+    <header class="bg-[#05445E] text-white text-center py-16 px-4 shadow-2xl">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight text-balance">Quanto Custa um Leito de UTI no Brasil?</h1>
+            <p class="mt-4 max-w-3xl mx-auto text-lg md:text-xl text-[#D4F1F4] text-balance">
+                Uma análise visual e interativa dos custos para manter uma vaga de terapia intensiva, revelando as surpreendentes diferenças entre as esferas de gestão.
+            </p>
+        </div>
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-8">
 
-        <section id="comparison" class="my-16">
-            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">Custo Mensal por Leito: Uma Comparação Direta</h2>
-            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
-                O custo para manter um leito de UTI varia drasticamente entre as gestões. A seguir, comparamos os custos totais estimados para cada cenário, evidenciando as diferenças no poder de compra e, principalmente, nos custos com recursos humanos.
+        <section id="comparison" class="my-20 animated-section">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-4 text-[#05445E]">O Custo Total: Comparação Direta</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12 text-lg">
+                O custo mensal para manter um leito de UTI varia drasticamente. Veja a seguir os custos totais estimados, evidenciando o impacto dos salários e do poder de compra em cada cenário.
             </p>
-            <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
                  <div class="chart-container">
                     <canvas id="totalCostChart"></canvas>
                 </div>
             </div>
         </section>
 
-        <hr class="my-16 border-gray-200">
-
-        <section id="composition" class="my-16">
-            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">A Composição dos Custos: Para Onde Vai o Dinheiro?</h2>
-            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
-                Embora o custo total mude, a proporção de cada despesa também se altera. Veja como os recursos humanos dominam os orçamentos, especialmente nos níveis estadual e federal, enquanto os custos com equipamentos e insumos têm um peso relativo menor.
+        <section id="composition" class="my-20 animated-section">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-4 text-[#05445E]">A Anatomia dos Custos</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12 text-lg">
+                Para onde vai o dinheiro? Os gráficos abaixo detalham a proporção de cada despesa. Note como os Recursos Humanos dominam os orçamentos, especialmente nos níveis mais altos de gestão.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
-                    <h3 class="text-xl font-bold mb-4">Municipal (Equador-RN)</h3>
+                <div class="bg-white p-6 rounded-2xl shadow-xl text-center border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-gray-700">Municipal (Equador-RN)</h3>
                     <div class="donut-chart-container">
                         <canvas id="municipalDonut"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
-                    <h3 class="text-xl font-bold mb-4">Estadual (RN)</h3>
+                <div class="bg-white p-6 rounded-2xl shadow-xl text-center border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-gray-700">Estadual (RN)</h3>
                     <div class="donut-chart-container">
                         <canvas id="estadualDonut"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
-                    <h3 class="text-xl font-bold mb-4">Federal (Brasil)</h3>
+                <div class="bg-white p-6 rounded-2xl shadow-xl text-center border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-gray-700">Federal (Brasil)</h3>
                     <div class="donut-chart-container">
                         <canvas id="federalDonut"></canvas>
                     </div>
@@ -88,50 +98,46 @@
             </div>
         </section>
         
-        <hr class="my-16 border-gray-200">
-
-        <section id="equipment" class="my-16">
-            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">O Investimento Inicial: Equipamentos Essenciais</h2>
-            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
-                Para além do custo mensal, a montagem de um leito de UTI exige um investimento inicial significativo em equipamentos. Apresentamos abaixo os custos de aquisição estimados para os itens essenciais. O custo mensal nos nossos cálculos é a depreciação destes valores ao longo da sua vida útil.
+        <section id="equipment" class="my-20 animated-section">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-4 text-[#05445E]">O Investimento Inicial em Equipamentos</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12 text-lg">
+                Montar um leito de UTI exige um alto investimento inicial. Abaixo, os custos de aquisição estimados para os itens essenciais. O custo mensal nos nossos cálculos é a depreciação destes valores.
             </p>
             <div id="equipmentList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             </div>
         </section>
 
-        <hr class="my-16 border-gray-200">
-
-        <section id="analysis" class="my-16">
-            <h2 class="text-3xl font-bold text-center mb-4 text-[#05445E]">Análise Detalhada: Fatores-Chave de Custo</h2>
-            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">
-                Dois fatores explicam a maior parte da variação de custos: os salários dos profissionais de saúde e o poder de compra para equipamentos e insumos. Vamos analisar cada um em detalhe.
+        <section id="analysis" class="my-20 animated-section">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-4 text-[#05445E]">Os Fatores por Trás dos Números</h2>
+            <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12 text-lg">
+                Dois fatores explicam a maior parte da variação: os salários e o poder de compra. Vamos analisar cada um em detalhe.
             </p>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-bold mb-4 text-center">🧑‍⚕️ O Peso dos Salários</h3>
-                    <p class="text-sm text-center text-gray-600 mb-6">A remuneração dos profissionais é o principal motor do custo total. Os valores apresentados representam o custo total para o empregador (salário + encargos).</p>
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-gray-700">🧑‍⚕️ O Peso dos Salários</h3>
+                    <p class="text-sm text-center text-gray-600 mb-6">A remuneração é o principal motor do custo. Os valores representam o custo total para o empregador (salário + encargos).</p>
                     <div class="chart-container" style="height: 350px;">
                         <canvas id="humanCostChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-bold mb-4 text-center">🛒 O Efeito da Escala: Poder de Compra</h3>
-                    <p class="text-sm text-center text-gray-600 mb-6">Gestões estaduais e federais conseguem preços melhores em equipamentos e insumos devido a compras em grande volume. Esta variação é representada por um multiplicador sobre o custo base.</p>
-                    <div class="space-y-4 mt-8">
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-gray-700">🛒 O Efeito da Escala</h3>
+                    <p class="text-sm text-center text-gray-600 mb-6">Gestões maiores conseguem melhores preços em compras de grande volume. Esta variação é representada por um multiplicador sobre o custo base.</p>
+                    <div class="space-y-6 mt-8">
                         <div class="bg-gray-100 p-4 rounded-lg">
-                            <h4 class="font-bold">Multiplicador de Custo - Equipamentos</h4>
+                            <h4 class="font-bold text-gray-700">Multiplicador de Custo - Equipamentos</h4>
                             <div class="flex justify-around mt-2 text-center">
-                                <div><span class="text-2xl font-bold text-red-600">+10%</span><p class="text-sm">Municipal</p></div>
-                                <div><span class="text-2xl font-bold text-gray-600">0%</span><p class="text-sm">Estadual</p></div>
-                                <div><span class="text-2xl font-bold text-green-600">-5%</span><p class="text-sm">Federal</p></div>
+                                <div><span class="text-3xl font-bold text-red-500">+10%</span><p class="text-sm font-medium">Municipal</p></div>
+                                <div><span class="text-3xl font-bold text-gray-600">0%</span><p class="text-sm font-medium">Estadual</p></div>
+                                <div><span class="text-3xl font-bold text-green-600">-5%</span><p class="text-sm font-medium">Federal</p></div>
                             </div>
                         </div>
                         <div class="bg-gray-100 p-4 rounded-lg">
-                            <h4 class="font-bold">Multiplicador de Custo - Insumos</h4>
+                            <h4 class="font-bold text-gray-700">Multiplicador de Custo - Insumos</h4>
                             <div class="flex justify-around mt-2 text-center">
-                                <div><span class="text-2xl font-bold text-red-600">+15%</span><p class="text-sm">Municipal</p></div>
-                                <div><span class="text-2xl font-bold text-gray-600">0%</span><p class="text-sm">Estadual</p></div>
-                                <div><span class="text-2xl font-bold text-green-600">-10%</span><p class="text-sm">Federal</p></div>
+                                <div><span class="text-3xl font-bold text-red-500">+15%</span><p class="text-sm font-medium">Municipal</p></div>
+                                <div><span class="text-3xl font-bold text-gray-600">0%</span><p class="text-sm font-medium">Estadual</p></div>
+                                <div><span class="text-3xl font-bold text-green-600">-10%</span><p class="text-sm font-medium">Federal</p></div>
                             </div>
                         </div>
                     </div>
@@ -141,10 +147,10 @@
 
     </main>
 
-    <footer class="bg-[#05445E] text-white text-center mt-16 py-8 px-4">
+    <footer class="bg-[#05445E] text-white text-center mt-16 py-12 px-4">
         <div class="max-w-4xl mx-auto">
-            <h2 class="text-2xl font-bold">Metodologia e Premissas</h2>
-            <div class="mt-4 text-sm text-left bg-[#189AB4] p-4 rounded-lg text-balance">
+            <h2 class="text-3xl font-extrabold">Metodologia e Premissas</h2>
+            <div class="mt-6 text-sm text-left bg-[#189AB4]/50 p-6 rounded-lg text-balance space-y-2">
                 <p><strong>• Custo de RH:</strong> O custo do enfermeiro(a) municipal considera o piso nacional (R$ 4.750) acrescido de ~80% de encargos. O custo médico municipal reflete uma média de 4.5 plantões de R$ 2.000. Os demais níveis são projeções proporcionais. </p>
                 <p><strong>• Custo de Equipamentos:</strong> O custo mensal é a depreciação do valor de aquisição, dividido pela vida útil do equipamento em meses.</p>
                 <p><strong>• Multiplicadores:</strong> Simulam o poder de compra de cada esfera. Um valor positivo (ex: +10%) representa um custo maior em relação à base; um negativo representa economia.</p>
@@ -191,12 +197,12 @@
             const equipmentListContainer = document.getElementById('equipmentList');
             data.base.equipment.forEach(item => {
                 const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-2xl shadow-lg flex items-center';
+                card.className = 'bg-white p-4 rounded-2xl shadow-lg flex items-center transform hover:-translate-y-2 transition-transform duration-300';
                 card.innerHTML = `
                     <div class="text-4xl mr-4">${item.icon}</div>
                     <div>
                         <h4 class="font-bold text-gray-800">${item.name}</h4>
-                        <p class="text-lg font-semibold text-[#05445E]">${formatCurrency(item.cost)}</p>
+                        <p class="text-xl font-semibold text-[#05445E]">${formatCurrency(item.cost)}</p>
                     </div>
                 `;
                 equipmentListContainer.appendChild(card);
@@ -232,12 +238,8 @@
                     },
                     label: function(context) {
                         let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed.y !== null) {
-                            label += formatCurrency(context.parsed.y);
-                        }
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) { label += formatCurrency(context.parsed.y); }
                         return label;
                     }
                 }
@@ -266,7 +268,17 @@
                 lightest: '#D4F1F4'
             };
 
-            new Chart(document.getElementById('totalCostChart'), {
+            const createChart = (ctx, config) => {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        new Chart(ctx, config);
+                        observer.disconnect();
+                    }
+                }, { threshold: 0.1 });
+                observer.observe(ctx.canvas);
+            };
+
+            createChart(document.getElementById('totalCostChart').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: ['Municipal (Equador-RN)', 'Estadual (RN)', 'Federal (Brasil)'],
@@ -275,29 +287,19 @@
                         data: [costResults.Municipal.total, costResults.Estadual.total, costResults.Federal.total],
                         backgroundColor: [brilliantBlues.light, brilliantBlues.medium, brilliantBlues.dark],
                         borderColor: '#ffffff',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        borderRadius: 5
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: chartTooltipOptions
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: (value) => formatCurrency(value)
-                            }
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: chartTooltipOptions },
+                    scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatCurrency(value) }}}
                 }
             });
 
-            const createDonut = (canvasId, data, title) => {
-                new Chart(document.getElementById(canvasId), {
+            const createDonut = (canvasId, data) => {
+                createChart(document.getElementById(canvasId).getContext('2d'), {
                     type: 'doughnut',
                     data: {
                         labels: ['Recursos Humanos', 'Equipamentos', 'Insumos', 'Operacional'],
@@ -305,67 +307,48 @@
                             data: [data.hr, data.equipment, data.supplies, data.operational],
                             backgroundColor: [brilliantBlues.dark, brilliantBlues.medium, brilliantBlues.light, brilliantBlues.lightest],
                             borderColor: '#ffffff',
-                            borderWidth: 2
+                            borderWidth: 3,
+                            hoverOffset: 10
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 15,
-                                    boxWidth: 12
-                                }
-                            },
-                            tooltip: donutTooltipOptions
-                        }
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { padding: 15, boxWidth: 12 }}, tooltip: donutTooltipOptions },
+                        cutout: '60%'
                     }
                 });
             };
 
-            createDonut('municipalDonut', costResults.Municipal, 'Municipal');
-            createDonut('estadualDonut', costResults.Estadual, 'Estadual');
-            createDonut('federalDonut', costResults.Federal, 'Federal');
+            createDonut('municipalDonut', costResults.Municipal);
+            createDonut('estadualDonut', costResults.Estadual);
+            createDonut('federalDonut', costResults.Federal);
             
-            new Chart(document.getElementById('humanCostChart'), {
+            createChart(document.getElementById('humanCostChart').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: ['Municipal', 'Estadual', 'Federal'],
                     datasets: [
-                        {
-                            label: 'Custo Médico',
-                            data: Object.values(data.hrCosts.medico),
-                            backgroundColor: brilliantBlues.dark,
-                        },
-                        {
-                            label: 'Custo Enfermeiro(a)',
-                            data: Object.values(data.hrCosts.enfermeiro),
-                            backgroundColor: brilliantBlues.medium,
-                        }
+                        { label: 'Custo Médico', data: Object.values(data.hrCosts.medico), backgroundColor: brilliantBlues.dark, borderRadius: 5 },
+                        { label: 'Custo Enfermeiro(a)', data: Object.values(data.hrCosts.enfermeiro), backgroundColor: brilliantBlues.medium, borderRadius: 5 }
                     ]
                 },
                  options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: chartTooltipOptions
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: (value) => formatCurrency(value)
-                            }
-                        },
-                        x: {
-                           grid: { display: false }
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' }, tooltip: chartTooltipOptions },
+                    scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatCurrency(value) }}, x: { grid: { display: false }}}
                 }
             });
+
+            const animatedSections = document.querySelectorAll('.animated-section');
+            const sectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        sectionObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            animatedSections.forEach(section => sectionObserver.observe(section));
         });
     </script>
 </body>
